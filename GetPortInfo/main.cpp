@@ -1,7 +1,8 @@
 //ref url:https://docs.microsoft.com/zh-cn/windows/win32/api/tcpmib/ns-tcpmib-_mib_tcptable
 #define _CRT_SECURE_NO_WARNINGS
-
-#include <winsock2.h>//
+#pragma warning(disable:4996)£»
+// Need to link with Iphlpapi.lib and Ws2_32.lib
+#include <winsock2.h>
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
 #include <stdio.h>
@@ -16,6 +17,7 @@
 
 int main()
 {
+
 	// Declare and initialize variables
 	PMIB_TCPTABLE pTcpTable;
 	DWORD dwSize = 0;
@@ -35,7 +37,6 @@ int main()
 	}
 
 	dwSize = sizeof(MIB_TCPTABLE);
-
 	// Make an initial call to GetTcpTable to
 	// get the necessary size into the dwSize variable
 	if ((dwRetVal = GetTcpTable(pTcpTable, &dwSize, TRUE)) ==
@@ -47,13 +48,17 @@ int main()
 			return 1;
 		}
 	}
-
 	// Make a second call to GetTcpTable to get
 	// the actual data we require
 	if ((dwRetVal = GetTcpTable(pTcpTable, &dwSize, TRUE)) == NO_ERROR) {
 		printf("\tNumber of entries: %d\n", (int)pTcpTable->dwNumEntries);
 		for (i = 0; i < (int)pTcpTable->dwNumEntries; i++) {
-			printf("\n\tTCP[%d] State: %ld - ", i, pTcpTable->table[i].dwState);
+			IpAddr.S_un.S_addr = (u_long)pTcpTable->table[i].dwLocalAddr;
+			strcpy_s(szLocalAddr, sizeof(szLocalAddr), inet_ntoa(IpAddr));
+			IpAddr.S_un.S_addr = (u_long)pTcpTable->table[i].dwRemoteAddr;
+			strcpy_s(szRemoteAddr, sizeof(szRemoteAddr), inet_ntoa(IpAddr));
+
+			printf("\n\tTCP[%d] State: %ld - ", i,	pTcpTable->table[i].dwState);
 			switch (pTcpTable->table[i].dwState) {
 			case MIB_TCP_STATE_CLOSED:
 				printf("CLOSED\n");
@@ -92,9 +97,15 @@ int main()
 				printf("DELETE-TCB\n");
 				break;
 			default:
-				printf("UNKNOWN dwState value: %d\n", pTcpTable->table[i].dwState);
+				printf("UNKNOWN dwState value\n");
 				break;
 			}
+			printf("\tTCP[%d] Local Addr: %s\n", i, szLocalAddr);
+			printf("\tTCP[%d] Local Port: %d \n", i,
+				ntohs((u_short)pTcpTable->table[i].dwLocalPort));
+			printf("\tTCP[%d] Remote Addr: %s\n", i, szRemoteAddr);
+			printf("\tTCP[%d] Remote Port: %d\n", i,
+				ntohs((u_short)pTcpTable->table[i].dwRemotePort));
 		}
 	}
 	else {
@@ -109,5 +120,5 @@ int main()
 	}
 
 	return 0;
-
 }
+
