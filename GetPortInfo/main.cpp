@@ -6,6 +6,9 @@
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
 #include <stdio.h>
+#include <iostream>
+using std::cout;
+using std::endl;
 
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
@@ -21,14 +24,7 @@ int main()
 	// Declare and initialize variables
 	PMIB_TCPTABLE pTcpTable;
 	DWORD dwSize = 0;
-	DWORD dwRetVal = 0;
-
-	char szLocalAddr[128];
-	char szRemoteAddr[128];
-
-	struct in_addr IpAddr;
-
-	int i;
+	DWORD dwRetVal = 0;	
 
 	pTcpTable = (MIB_TCPTABLE*)MALLOC(sizeof(MIB_TCPTABLE));
 	if (pTcpTable == NULL) {
@@ -37,8 +33,7 @@ int main()
 	}
 
 	dwSize = sizeof(MIB_TCPTABLE);
-	// Make an initial call to GetTcpTable to
-	// get the necessary size into the dwSize variable
+	
 	if ((dwRetVal = GetTcpTable(pTcpTable, &dwSize, TRUE)) ==
 		ERROR_INSUFFICIENT_BUFFER) {
 		FREE(pTcpTable);
@@ -48,64 +43,14 @@ int main()
 			return 1;
 		}
 	}
-	// Make a second call to GetTcpTable to get
-	// the actual data we require
+	
+	
 	if ((dwRetVal = GetTcpTable(pTcpTable, &dwSize, TRUE)) == NO_ERROR) {
-		printf("\tNumber of entries: %d\n", (int)pTcpTable->dwNumEntries);
-		for (i = 0; i < (int)pTcpTable->dwNumEntries; i++) {
-			IpAddr.S_un.S_addr = (u_long)pTcpTable->table[i].dwLocalAddr;
-			strcpy_s(szLocalAddr, sizeof(szLocalAddr), inet_ntoa(IpAddr));
-			IpAddr.S_un.S_addr = (u_long)pTcpTable->table[i].dwRemoteAddr;
-			strcpy_s(szRemoteAddr, sizeof(szRemoteAddr), inet_ntoa(IpAddr));
-
-			printf("\n\tTCP[%d] State: %ld - ", i,	pTcpTable->table[i].dwState);
-			switch (pTcpTable->table[i].dwState) {
-			case MIB_TCP_STATE_CLOSED:
-				printf("CLOSED\n");
-				break;
-			case MIB_TCP_STATE_LISTEN:
-				printf("LISTEN\n");
-				break;
-			case MIB_TCP_STATE_SYN_SENT:
-				printf("SYN-SENT\n");
-				break;
-			case MIB_TCP_STATE_SYN_RCVD:
-				printf("SYN-RECEIVED\n");
-				break;
-			case MIB_TCP_STATE_ESTAB:
-				printf("ESTABLISHED\n");
-				break;
-			case MIB_TCP_STATE_FIN_WAIT1:
-				printf("FIN-WAIT-1\n");
-				break;
-			case MIB_TCP_STATE_FIN_WAIT2:
-				printf("FIN-WAIT-2 \n");
-				break;
-			case MIB_TCP_STATE_CLOSE_WAIT:
-				printf("CLOSE-WAIT\n");
-				break;
-			case MIB_TCP_STATE_CLOSING:
-				printf("CLOSING\n");
-				break;
-			case MIB_TCP_STATE_LAST_ACK:
-				printf("LAST-ACK\n");
-				break;
-			case MIB_TCP_STATE_TIME_WAIT:
-				printf("TIME-WAIT\n");
-				break;
-			case MIB_TCP_STATE_DELETE_TCB:
-				printf("DELETE-TCB\n");
-				break;
-			default:
-				printf("UNKNOWN dwState value\n");
-				break;
+		cout << "=====================LISTENNING STATUS TCP  PORTS=====================" << endl;
+		for (int i = 0; i < (int)pTcpTable->dwNumEntries; i++) {
+			if (pTcpTable->table[i].dwState == MIB_TCP_STATE_LISTEN) {
+				printf("[%d] Local Port: %d \n", i, ntohs((u_short)pTcpTable->table[i].dwLocalPort));	
 			}
-			printf("\tTCP[%d] Local Addr: %s\n", i, szLocalAddr);
-			printf("\tTCP[%d] Local Port: %d \n", i,
-				ntohs((u_short)pTcpTable->table[i].dwLocalPort));
-			printf("\tTCP[%d] Remote Addr: %s\n", i, szRemoteAddr);
-			printf("\tTCP[%d] Remote Port: %d\n", i,
-				ntohs((u_short)pTcpTable->table[i].dwRemotePort));
 		}
 	}
 	else {
