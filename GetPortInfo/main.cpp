@@ -1,7 +1,7 @@
 //ref url:https://docs.microsoft.com/zh-cn/windows/win32/api/tcpmib/ns-tcpmib-_mib_tcptable
 #define _CRT_SECURE_NO_WARNINGS
 
-#include <winsock2.h>
+#include <winsock2.h>//
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
 #include <stdio.h>
