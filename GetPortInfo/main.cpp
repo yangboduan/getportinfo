@@ -7,8 +7,10 @@
 #include <iphlpapi.h>
 #include <stdio.h>
 #include <iostream>
+#include<set>  
 using std::cout;
 using std::endl;
+using std::set;
 
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
@@ -18,7 +20,8 @@ using std::endl;
 
 /* Note: could also use malloc() and free() */
 
-int displayTcpPortInfo() {
+int getTcpPortInfo(set<u_short> &setTcpPort) {
+	
 	// Declare and initialize variables
 	PMIB_TCPTABLE pTcpTable;
 	DWORD dwSize = 0;
@@ -44,10 +47,10 @@ int displayTcpPortInfo() {
 
 
 	if ((dwRetVal = GetTcpTable(pTcpTable, &dwSize, TRUE)) == NO_ERROR) {
-		cout << "=====================LISTENNING STATUS TCP  PORTS=====================" << endl;
 		for (int i = 0; i < (int)pTcpTable->dwNumEntries; i++) {
 			if (pTcpTable->table[i].dwState == MIB_TCP_STATE_LISTEN) {
-				printf("[%d] Local Port: %d \n", i, ntohs((u_short)pTcpTable->table[i].dwLocalPort));
+				//printf("[%d] Local Port: %d \n", i, ntohs((u_short)pTcpTable->table[i].dwLocalPort));
+				setTcpPort.insert(ntohs((u_short)pTcpTable->table[i].dwLocalPort));
 			}
 		}
 	}
@@ -61,11 +64,12 @@ int displayTcpPortInfo() {
 		FREE(pTcpTable);
 		pTcpTable = NULL;
 	}
+	return 0;
 }
 
 
 
-int displayUdpPortInfo() {
+int getUdpPortInfo(set<u_short> &setUdpPort) {
 	// Declare and initialize variables
 	PMIB_UDPTABLE pUdpTable;
 	DWORD dwSize = 0;
@@ -91,10 +95,10 @@ int displayUdpPortInfo() {
 
 	
 	if ((dwRetVal = GetUdpTable(pUdpTable, &dwSize, TRUE)) == NO_ERROR) {
-		cout << "=====================LISTENNING STATUS UDP  PORTS=====================" << endl;
 		for (int i = 0; i < (int)pUdpTable->dwNumEntries; i++) {
 			/*if (pUdpTable->table[i].dwState == MIB_UDP_STATE_LISTEN) {*/
-				printf("[%d] Local Port: %d \n", i, ntohs((u_short)pUdpTable->table[i].dwLocalPort));
+				//printf("[%d] Local Port: %d \n", i, ntohs((u_short)pUdpTable->table[i].dwLocalPort));
+				setUdpPort.insert((u_short)pUdpTable->table[i].dwLocalPort);
 			/*}*/
 		}
 	}
@@ -108,12 +112,33 @@ int displayUdpPortInfo() {
 		FREE(pUdpTable);
 		pUdpTable = NULL;
 	}
+	return 0;
 }
+
+
 int main()
 {
+	set<u_short> setTcpPort;
+	cout << "tcp port set " << endl;
+	if (getTcpPortInfo(setTcpPort) == 0) {
+		int i = 0;
+		for (auto it = setTcpPort.begin(); it != setTcpPort.end(); it++) {
+			cout << "[" << i << "]  tcpp port:" << *it << endl;
+			i++;
+		}
+	}
+	
 
-	displayTcpPortInfo();
-	displayUdpPortInfo();
+	set<u_short> setUdpPort;
+	cout << "udp port set " << endl;
+	if (getUdpPortInfo(setUdpPort) == 0) {
+		int i = 0;
+		for (auto it = setUdpPort.begin(); it != setUdpPort.end(); it++) {
+			cout <<"["<<i<<"]  udp port:" <<*it << endl;
+			i++;
+		}
+			
+	}
 
 	return 0;
 }
